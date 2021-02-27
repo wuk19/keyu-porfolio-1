@@ -1,0 +1,78 @@
+---
+title: "porfolio 1"
+author: "keyu wu"
+date: "02/20/2021"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load packages and data
+
+```{r load-packages, message=FALSE}
+library(tidyverse) 
+library(dplyr)
+library(readxl)
+dataforfyp <- read_excel("~/Desktop/FYGS/FYP/dataforfyp.xlsx")
+View(dataforfyp)
+```
+
+## background: There is an established link between social support and health. However, the directionality of this relationship is unclear such that there could be some reciprocal effects. Therefore, whether one's health status can predict his or her social support worths investigation. the sample population is college students.
+
+## filter relevant variables to test (belonging, health and social support).
+```{r social_support_health}
+social_support_health <- dataforfyp %>%
+  select(t4Belong, t5Belong, t6Belong, t7Belong, t4_friends, t5_friends, t6_friends, t7_friends, t4health, t5health, t6health, t7health)
+
+#social support is measured in terms of one's number of friends.
+#it is a longitudinal data such that t4 = freshmen year, t5 = sophomore year, t6 = junior year and t7 = senior year.
+```
+
+## glance the distribution of all variables.
+```{r distribution_of_all_variables}
+library(purrr)
+social_support_health %>%
+  keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_histogram()
+```
+#except for the health measures which are normally distributed, the social support measure seems extremely skewed to the left and belonging is somewhat skewed to the right
+
+## plot the association between health and subsequent social support.
+```{r t4_t5}
+ggplot(data = social_support_health, 
+       mapping = aes(x = t4health, y = t5_friends )) +
+  geom_jitter() 
+```
+
+```{r t5_t6}
+ggplot(data = social_support_health, 
+       mapping = aes(x = t5health, y = t6_friends)) +
+  geom_jitter()
+```
+```{r t6_t7}
+ggplot(data = social_support_health, 
+       mapping = aes(x = t6health, y = t7_friends)) +
+  geom_jitter()
+```
+
+# overall, these plots appear that no linear relationship exists between one's health status and number of friends. One's health may not predict his or her social support in the future across all time points.
+
+## conduct a linear regression model in order to test whether one's health predict future social support above and beyond belonging.
+```{r}
+lmsupport = lm(t5_friends ~ t4health + t4Belong, data = social_support_health)
+summary(lmsupport)
+
+lmsupport = lm(t6_friends ~ t5health + t5Belong, data = social_support_health)
+summary(lmsupport)
+
+lmsupport = lm(t7_friends ~ t6health + t6Belong, data = social_support_health)
+summary(lmsupport)
+```
+
+#across all three models, the multiple R-squareds are consistently small, indicating that the %variance explained by the overall model are negligible. Surprisingly, in the first and second model, belonging signifcantly predict one's social suuport; however, it is no longer significant in the last regression. 
+#although the results are inconsistent regarding belonging, health in general does not predict the number of friends of college students may have.
